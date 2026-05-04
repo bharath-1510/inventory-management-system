@@ -1,5 +1,6 @@
 package com.example.inventory.controller;
 
+import com.example.inventory.dto.InventoryDTO;
 import com.example.inventory.entity.Inventory;
 import com.example.inventory.service.InventoryService;
 import lombok.RequiredArgsConstructor;
@@ -18,21 +19,36 @@ public class InventoryController {
     private final InventoryService inventoryService; // Service dependency injected by Spring
 
     /**
+     * Helper method to convert an Inventory entity to an InventoryDTO.
+     */
+    private InventoryDTO convertToDTO(Inventory inventory) {
+        return new InventoryDTO(
+                inventory.getId(),
+                inventory.getProduct().getId(),
+                inventory.getProduct().getName(),
+                inventory.getQuantity(),
+                inventory.getReorderLevel()
+        );
+    }
+
+    /**
      * Retrieves the inventory details for a specific product.
      */
     @GetMapping("/product/{productId}") // Handles GET requests to "/api/inventory/product/{productId}"
-    public ResponseEntity<Inventory> getInventory(@PathVariable Long productId) {
-        return ResponseEntity.ok(inventoryService.getInventoryByProductId(productId));
+    public ResponseEntity<InventoryDTO> getInventory(@PathVariable Long productId) {
+        Inventory inventory = inventoryService.getInventoryByProductId(productId);
+        return ResponseEntity.ok(convertToDTO(inventory));
     }
 
     /**
      * Updates the stock for a product by adding or subtracting a given quantity.
      */
     @PutMapping("/product/{productId}/stock") // Handles PUT requests to update stock
-    public ResponseEntity<Inventory> updateStock(
+    public ResponseEntity<InventoryDTO> updateStock(
             @PathVariable Long productId, // Extracts the productId from the URL path
             @RequestParam Integer quantityToAdd) { // Extracts the quantityToAdd from query parameters
-        return ResponseEntity.ok(inventoryService.updateStock(productId, quantityToAdd));
+        Inventory updatedInventory = inventoryService.updateStock(productId, quantityToAdd);
+        return ResponseEntity.ok(convertToDTO(updatedInventory));
     }
 
     /**

@@ -50,3 +50,5 @@ CREATE INDEX idx_order_items_order ON order_items(order_id);
 
 create database inventory_db;
 use inventory_db;
+
+select * from products;
