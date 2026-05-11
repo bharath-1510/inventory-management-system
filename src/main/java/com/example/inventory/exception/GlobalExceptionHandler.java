@@ -70,4 +70,56 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    /**
+     * Handles Authentication errors (e.g., bad credentials, missing token).
+     */
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(org.springframework.security.core.AuthenticationException ex, WebRequest request) {
+        log.error("Authentication Error caught: ", ex);
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Unauthorized",
+                ex.getMessage(),
+                HttpStatus.UNAUTHORIZED.value(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Handles Access Denied errors (e.g., trying to access an ADMIN route as a CUSTOMER).
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
+        log.error("Access Denied Error caught: ", ex);
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Forbidden",
+                "You do not have permission to access this resource",
+                HttpStatus.FORBIDDEN.value(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Handles specific JWT parsing/validation errors explicitly.
+     */
+    @ExceptionHandler({io.jsonwebtoken.ExpiredJwtException.class, io.jsonwebtoken.MalformedJwtException.class, io.jsonwebtoken.security.SignatureException.class, io.jsonwebtoken.JwtException.class})
+    public ResponseEntity<ErrorResponse> handleJwtExceptions(Exception ex, WebRequest request) {
+        log.error("JWT Error caught: ", ex);
+        String message = "Invalid or expired token";
+        if (ex instanceof io.jsonwebtoken.ExpiredJwtException) {
+            message = "Token has expired. Please log in again.";
+        } else if (ex instanceof io.jsonwebtoken.security.SignatureException) {
+            message = "Token signature is invalid.";
+        }
+        
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Unauthorized",
+                message,
+                HttpStatus.UNAUTHORIZED.value(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
 }

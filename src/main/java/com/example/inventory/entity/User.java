@@ -14,12 +14,16 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "users")
+/**
+ * Represents a User in the system.
+ * Implements Spring Security's UserDetails interface so Spring can use this entity for Authentication.
+ */
+@Data // Generates getters, setters, toString, equals, and hashCode
+@Builder // Provides a fluent builder API (e.g. User.builder().name("...").build())
+@NoArgsConstructor // Required by JPA
+@AllArgsConstructor // Required by the Builder pattern
+@Entity // Marks this as a JPA Entity
+@Table(name = "users") // Maps this entity to the 'users' table in the DB
 public class User implements UserDetails {
 
     @Id
@@ -38,32 +42,42 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING) // Store the Role as a string ('ADMIN', 'CLERK') instead of a number
     @Column(nullable = false)
     private Role role;
 
-    @CreationTimestamp
+    @CreationTimestamp // Hibernate automatically sets this to the current time when inserted
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
+    /**
+     * Required by Spring Security. Converts our custom Role into a format Spring understands (GrantedAuthority).
+     * By convention, Spring expects roles to start with "ROLE_".
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
+    /**
+     * Required by Spring Security. Returns the unique identifier for the user (we use email).
+     */
     @Override
     public String getUsername() {
         return email;
     }
 
+    // The following methods are for account expiration, locking, and disabling features.
+    // We are not using these features currently, so we return true for all.
+
     @Override
     public boolean isAccountNonExpired() {
-        return true; // We don't have account expiration logic
+        return true; 
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // We don't have locking logic
+        return true; 
     }
 
     @Override
